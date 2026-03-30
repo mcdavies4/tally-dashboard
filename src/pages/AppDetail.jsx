@@ -403,17 +403,6 @@ function SettingsTab({ appId, app }) {
     letterSpacing: '0.5px',
   }
 
-  const inputStyle = {
-    width: '100%',
-    padding: '10px 14px',
-    background: 'var(--bg-3)',
-    border: '1px solid var(--border)',
-    borderRadius: 'var(--radius)',
-    color: 'var(--text)',
-    fontSize: 13,
-    outline: 'none',
-  }
-
   const save = async () => {
     setSaving(true)
     await supabase
@@ -557,4 +546,3 @@ const inputStyle = {
   color: 'var(--text)', fontSize: 13, outline: 'none',
 }
 
-// APPEND: Settings tab content (add 'Settings' to TABS array manually)
