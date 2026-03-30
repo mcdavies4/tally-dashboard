@@ -4,6 +4,7 @@ import { supabase } from './lib/supabase'
 import Auth from './pages/Auth'
 import Dashboard from './pages/Dashboard'
 import AppDetail from './pages/AppDetail'
+import Billing from './pages/Billing'
 import Layout from './components/Layout'
 
 export default function App() {
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/" element={session ? <Layout session={session} /> : <Navigate to="/auth" />}>
           <Route index element={<Dashboard />} />
           <Route path="apps/:appId" element={<AppDetail />} />
+          <Route path="billing" element={<Billing />} />
         </Route>
       </Routes>
     </BrowserRouter>

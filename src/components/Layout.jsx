@@ -40,8 +40,12 @@ export default function Layout({ session }) {
         {/* Nav */}
         <nav style={{ flex: 1, padding: '0 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
           <NavLink to="/" end style={({ isActive }) => navStyle(isActive)}>
-            <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 2h4v4H2V2zm7 0h4v4H9V2zM2 9h4v4H2V9zm7 0h4v4H9V9z" fill="currentColor"/></svg>
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 2h4v4H2V2zm7 0h4v4H9V2zM2 9h4v4H9V9zm7 0h4v4H9V9z" fill="currentColor"/></svg>
             Apps
+          </NavLink>
+          <NavLink to="/billing" style={({ isActive }) => navStyle(isActive)}>
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M1 3h13v2H1V3zm0 4h13v1H1V7zm0 3h8v1H1v-1zm0 3h5v1H1v-1z" fill="currentColor"/></svg>
+            Billing
           </NavLink>
         </nav>
 

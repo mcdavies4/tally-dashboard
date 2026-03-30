@@ -458,11 +458,11 @@ function SettingsTab({ appId, app }) {
           Point your Stripe webhook at this URL. Use your API key as the <code style={{ background: 'var(--bg-3)', padding: '1px 6px', borderRadius: 3 }}>x-tally-webhook-secret</code> header.
         </p>
         <div style={{ display: 'flex', gap: 8 }}>
-          <div style={{ ...inputStyle, flex: 1, color: 'var(--text-3)', fontSize: 12, display: 'flex', alignItems: 'center', fontFamily: 'var(--font-mono)' }}>
-            {import.meta.env.VITE_API_URL || 'https://your-api.railway.app'}/webhooks/stripe/{appId}
+          <div style={{ ...inputStyle, flex: 1, color: 'var(--text-3)', fontSize: 12, display: 'flex', alignItems: 'center' }}>
+            {import.meta.env.VITE_API_URL || 'https://your-api.railway.app'}/webhooks/stripe
           </div>
           <button
-            onClick={() => navigator.clipboard.writeText(`${import.meta.env.VITE_API_URL || 'https://your-api.railway.app'}/webhooks/stripe/${appId}`)}
+            onClick={() => navigator.clipboard.writeText(`${import.meta.env.VITE_API_URL || 'https://your-api.railway.app'}/webhooks/stripe`)}
             style={btnGhost}
           >
             copy
