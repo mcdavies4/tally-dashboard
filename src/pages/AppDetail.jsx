@@ -453,21 +453,28 @@ function SettingsTab({ appId, app }) {
       </div>
 
       <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 28 }}>
-        <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>Stripe Webhook URL</h3>
-        <p style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: 16, lineHeight: 1.6 }}>
-          Point your Stripe webhook at this URL. Use your API key as the <code style={{ background: 'var(--bg-3)', padding: '1px 6px', borderRadius: 3 }}>x-tally-webhook-secret</code> header.
+        <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>Webhook URLs</h3>
+        <p style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: 20, lineHeight: 1.6 }}>
+          Point your payment provider's webhook at your app-specific URL below. Pass <code style={{ background: 'var(--bg-3)', padding: '1px 6px', borderRadius: 3 }}>tally_user_id</code> in payment metadata.
         </p>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <div style={{ ...inputStyle, flex: 1, color: 'var(--text-3)', fontSize: 12, display: 'flex', alignItems: 'center' }}>
-            {import.meta.env.VITE_API_URL || 'https://your-api.railway.app'}/webhooks/stripe
-          </div>
-          <button
-            onClick={() => navigator.clipboard.writeText(`${import.meta.env.VITE_API_URL || 'https://your-api.railway.app'}/webhooks/stripe`)}
-            style={btnGhost}
-          >
-            copy
-          </button>
-        </div>
+        {[
+          { label: 'Stripe', path: 'stripe' },
+          { label: 'Polar', path: 'polar' },
+          { label: 'Lemon Squeezy', path: 'lemonsqueezy' },
+        ].map(({ label, path }) => {
+          const url = `${import.meta.env.VITE_API_URL || 'https://your-api.railway.app'}/webhooks/${path}/${appId}`
+          return (
+            <div key={path} style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ ...inputStyle, flex: 1, color: 'var(--text-3)', fontSize: 12, display: 'flex', alignItems: 'center', fontFamily: 'var(--font-mono)' }}>
+                  {url}
+                </div>
+                <button onClick={() => navigator.clipboard.writeText(url)} style={btnGhost}>copy</button>
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
