@@ -10,6 +10,9 @@ export default function Dashboard() {
   const [newAppName, setNewAppName] = useState('')
   const navigate = useNavigate()
 
+  const [planLimit, setPlanLimit] = useState(3)
+  const [currentPlan, setCurrentPlan] = useState('free')
+
   const fetchApps = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     const { data } = await supabase
@@ -18,6 +21,24 @@ export default function Dashboard() {
       .eq('owner_email', user.email)
       .order('created_at', { ascending: false })
     setApps(data || [])
+
+    // Get plan limits
+    const { data: sub } = await supabase
+      .from('subscriptions')
+      .select('plan')
+      .eq('owner_email', user.email)
+      .single()
+
+    const plan = sub?.plan || 'free'
+    setCurrentPlan(plan)
+
+    const { data: limits } = await supabase
+      .from('plan_limits')
+      .select('max_apps')
+      .eq('plan', plan)
+      .single()
+
+    setPlanLimit(limits?.max_apps ?? 3)
     setLoading(false)
   }
 
@@ -25,6 +46,10 @@ export default function Dashboard() {
 
   const createApp = async () => {
     if (!newAppName.trim()) return
+    if (currentPlan === 'free' && apps.length >= planLimit) {
+      setShowCreate(false)
+      return
+    }
     setCreating(true)
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -65,12 +90,29 @@ export default function Dashboard() {
             Each app gets its own API keys and user credit ledger
           </p>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          style={btnPrimary}
-        >
-          + New App
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {currentPlan === 'free' && (
+            <span style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
+              {apps.length}/{planLimit} apps
+            </span>
+          )}
+          <button
+            onClick={() => {
+              if (currentPlan === 'free' && apps.length >= planLimit) {
+                window.location.href = '/billing'
+              } else {
+                setShowCreate(true)
+              }
+            }}
+            style={{
+              ...btnPrimary,
+              background: currentPlan === 'free' && apps.length >= planLimit ? 'var(--yellow)' : 'var(--accent)',
+              color: '#000',
+            }}
+          >
+            {currentPlan === 'free' && apps.length >= planLimit ? '⚡ Upgrade to add more' : '+ New App'}
+          </button>
+        </div>
       </div>
 
       {/* Create App Modal */}
