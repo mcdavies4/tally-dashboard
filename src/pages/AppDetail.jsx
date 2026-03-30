@@ -393,6 +393,27 @@ function SettingsTab({ appId, app }) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
+  const labelStyle = {
+    display: 'block',
+    fontSize: 11,
+    color: 'var(--text-3)',
+    fontFamily: 'var(--font-mono)',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+  }
+
+  const inputStyle = {
+    width: '100%',
+    padding: '10px 14px',
+    background: 'var(--bg-3)',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius)',
+    color: 'var(--text)',
+    fontSize: 13,
+    outline: 'none',
+  }
+
   const save = async () => {
     setSaving(true)
     await supabase
