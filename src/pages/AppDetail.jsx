@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
-const TABS = ['API Keys', 'Users', 'Transactions', 'Analytics']
+const TABS = ['API Keys', 'Users', 'Transactions', 'Analytics', 'Settings']
 
 export default function AppDetail() {
   const { appId } = useParams()
@@ -75,6 +75,7 @@ export default function AppDetail() {
         {tab === 'Users' && <UsersTab appId={appId} />}
         {tab === 'Transactions' && <TransactionsTab appId={appId} />}
         {tab === 'Analytics' && <AnalyticsTab appId={appId} />}
+        {tab === 'Settings' && <SettingsTab appId={appId} app={app} />}
       </div>
     </div>
   )
@@ -384,6 +385,94 @@ function AnalyticsTab({ appId }) {
   )
 }
 
+
+// ─── Settings Tab ───────────────────────────────────────────────
+function SettingsTab({ appId, app }) {
+  const [rate, setRate] = useState(app.credit_rate ?? 100)
+  const [currency, setCurrency] = useState(app.rate_currency ?? 'gbp')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  const save = async () => {
+    setSaving(true)
+    await supabase
+      .from('apps')
+      .update({ credit_rate: Number(rate), rate_currency: currency })
+      .eq('id', appId)
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  return (
+    <div style={{ maxWidth: 480 }}>
+      <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 28, marginBottom: 20 }}>
+        <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>Credit Conversion Rate</h3>
+        <p style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: 24, lineHeight: 1.6 }}>
+          Set how many credits a user receives per 1 unit of currency. Used automatically when <code style={{ background: 'var(--bg-3)', padding: '1px 6px', borderRadius: 3 }}>tally_credits</code> is not passed in Stripe metadata.
+        </p>
+
+        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', marginBottom: 20 }}>
+          <div style={{ flex: 1 }}>
+            <label style={labelStyle}>Currency</label>
+            <select
+              value={currency}
+              onChange={e => setCurrency(e.target.value)}
+              style={{ ...inputStyle, cursor: 'pointer' }}
+            >
+              <option value="gbp">GBP (£)</option>
+              <option value="usd">USD ($)</option>
+              <option value="eur">EUR (€)</option>
+              <option value="ngn">NGN (₦)</option>
+            </select>
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={labelStyle}>Credits per 1 unit</label>
+            <input
+              type="number"
+              min="1"
+              value={rate}
+              onChange={e => setRate(e.target.value)}
+              style={inputStyle}
+            />
+          </div>
+        </div>
+
+        <div style={{ background: 'var(--accent-dim)', border: '1px solid var(--accent-border)', borderRadius: 'var(--radius)', padding: '12px 16px', marginBottom: 20 }}>
+          <div style={{ fontSize: 12, color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>
+            Preview: £10 payment → <strong>{(10 * Number(rate)).toLocaleString()} credits</strong>
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginTop: 4 }}>
+            £1 = {Number(rate).toLocaleString()} credits
+          </div>
+        </div>
+
+        <button onClick={save} disabled={saving} style={btnPrimary}>
+          {saving ? <div className="spinner" style={{ borderTopColor: '#000' }} /> : saved ? '✓ Saved' : 'Save rate'}
+        </button>
+      </div>
+
+      <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 28 }}>
+        <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>Stripe Webhook URL</h3>
+        <p style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: 16, lineHeight: 1.6 }}>
+          Point your Stripe webhook at this URL. Use your API key as the <code style={{ background: 'var(--bg-3)', padding: '1px 6px', borderRadius: 3 }}>x-tally-webhook-secret</code> header.
+        </p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ ...inputStyle, flex: 1, color: 'var(--text-3)', fontSize: 12, display: 'flex', alignItems: 'center' }}>
+            {import.meta.env.VITE_API_URL || 'https://your-api.railway.app'}/webhooks/stripe
+          </div>
+          <button
+            onClick={() => navigator.clipboard.writeText(`${import.meta.env.VITE_API_URL || 'https://your-api.railway.app'}/webhooks/stripe`)}
+            style={btnGhost}
+          >
+            copy
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Shared Components ──────────────────────────────────────────
 function StatCard({ label, value, accent }) {
   return (
@@ -439,3 +528,5 @@ const inputStyle = {
   border: '1px solid var(--border)', borderRadius: 'var(--radius)',
   color: 'var(--text)', fontSize: 13, outline: 'none',
 }
+
+// APPEND: Settings tab content (add 'Settings' to TABS array manually)
