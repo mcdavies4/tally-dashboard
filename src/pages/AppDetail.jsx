@@ -470,7 +470,6 @@ function SettingsTab({ appId, app }) {
         {[
           { label: 'Stripe', path: 'stripe' },
           { label: 'Polar', path: 'polar' },
-          { label: 'Lemon Squeezy', path: 'lemonsqueezy' },
         ].map(({ label, path }) => {
           const url = `${import.meta.env.VITE_API_URL || 'https://your-api.railway.app'}/webhooks/${path}/${appId}`
           return (

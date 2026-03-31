@@ -1,6 +1,8 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
+const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL
+
 export default function Layout({ session }) {
   const navigate = useNavigate()
 
@@ -47,15 +49,17 @@ export default function Layout({ session }) {
             <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M1 3h13v2H1V3zm0 4h13v1H1V7zm0 3h8v1H1v-1zm0 3h5v1H1v-1z" fill="currentColor"/></svg>
             Billing
           </NavLink>
-          <NavLink to="/admin" style={({ isActive }) => ({
-            ...navStyle(isActive),
-            color: isActive ? 'var(--red)' : 'var(--text-3)',
-            background: isActive ? 'rgba(255,68,68,0.08)' : 'transparent',
-            border: isActive ? '1px solid rgba(255,68,68,0.2)' : '1px solid transparent',
-          })}>
-            <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7 1a6 6 0 100 12A6 6 0 007 1zM4 7a3 3 0 116 0 3 3 0 01-6 0z" fill="currentColor"/></svg>
-            Admin
-          </NavLink>
+          {session.user.email === ADMIN_EMAIL && (
+            <NavLink to="/admin" style={({ isActive }) => ({
+              ...navStyle(isActive),
+              color: isActive ? 'var(--red)' : 'var(--text-3)',
+              background: isActive ? 'rgba(255,68,68,0.08)' : 'transparent',
+              border: isActive ? '1px solid rgba(255,68,68,0.2)' : '1px solid transparent',
+            })}>
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7 1a6 6 0 100 12A6 6 0 007 1zM4 7a3 3 0 116 0 3 3 0 01-6 0z" fill="currentColor"/></svg>
+              Admin
+            </NavLink>
+          )}
         </nav>
 
         {/* User */}
