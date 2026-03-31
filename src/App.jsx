@@ -5,6 +5,7 @@ import Auth from './pages/Auth'
 import Dashboard from './pages/Dashboard'
 import AppDetail from './pages/AppDetail'
 import Billing from './pages/Billing'
+import Admin from './pages/Admin'
 import Layout from './components/Layout'
 
 export default function App() {
@@ -36,6 +37,7 @@ export default function App() {
           <Route index element={<Dashboard />} />
           <Route path="apps/:appId" element={<AppDetail />} />
           <Route path="billing" element={<Billing />} />
+          <Route path="admin" element={<Admin />} />
         </Route>
       </Routes>
     </BrowserRouter>
