@@ -41,6 +41,10 @@ export default function Layout({ session }) {
 
         {/* Nav */}
         <nav style={{ flex: 1, padding: '0 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <a href="https://tally-landing-ochre.vercel.app/docs.html" target="_blank" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 'var(--radius)', fontSize: 13, color: 'var(--text-3)', border: '1px solid transparent', transition: 'all 0.15s', fontFamily: 'var(--font-display)', }} onMouseEnter={e => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.background = 'var(--bg-3)' }} onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent' }}>
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 1h11v13H2V1zm2 2v1h7V3H4zm0 3v1h7V6H4zm0 3v1h5V9H4z" fill="currentColor"/></svg>
+            Docs
+          </a>
           <NavLink to="/" end style={({ isActive }) => navStyle(isActive)}>
             <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 2h4v4H2V2zm7 0h4v4H9V2zM2 9h4v4H9V9zm7 0h4v4H9V9z" fill="currentColor"/></svg>
             Apps
