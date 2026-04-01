@@ -61,16 +61,16 @@ export default function Dashboard() {
       .single()
 
     if (!error && app) {
-      // Auto-generate first API key
-      const key = 'tally_' + Array.from(crypto.getRandomValues(new Uint8Array(24)))
+      // Auto-generate live + test keys
+      const liveKey = 'tally_live_' + Array.from(crypto.getRandomValues(new Uint8Array(24)))
+        .map(b => b.toString(16).padStart(2, '0')).join('')
+      const testKey = 'tally_test_' + Array.from(crypto.getRandomValues(new Uint8Array(24)))
         .map(b => b.toString(16).padStart(2, '0')).join('')
 
-      await supabase.from('api_keys').insert({
-        app_id: app.id,
-        key,
-        label: 'Default key',
-        is_active: true,
-      })
+      await supabase.from('api_keys').insert([
+        { app_id: app.id, key: liveKey, label: 'Live key', is_active: true, is_sandbox: false },
+        { app_id: app.id, key: testKey, label: 'Test key', is_active: true, is_sandbox: true },
+      ])
 
       setNewAppName('')
       setShowCreate(false)

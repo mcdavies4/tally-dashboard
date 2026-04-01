@@ -97,11 +97,20 @@ function ApiKeysTab({ appId }) {
 
   useEffect(() => { fetchKeys() }, [appId])
 
+  const [isSandboxKey, setIsSandboxKey] = useState(false)
+
   const createKey = async () => {
     setCreating(true)
-    const key = 'tally_' + Array.from(crypto.getRandomValues(new Uint8Array(24)))
+    const prefix = isSandboxKey ? 'tally_test_' : 'tally_live_'
+    const key = prefix + Array.from(crypto.getRandomValues(new Uint8Array(24)))
       .map(b => b.toString(16).padStart(2, '0')).join('')
-    await supabase.from('api_keys').insert({ app_id: appId, key, label: newLabel || 'New key', is_active: true })
+    await supabase.from('api_keys').insert({
+      app_id: appId,
+      key,
+      label: newLabel || (isSandboxKey ? 'Test key' : 'Live key'),
+      is_active: true,
+      is_sandbox: isSandboxKey,
+    })
     setNewLabel('')
     await fetchKeys()
     setCreating(false)
@@ -117,16 +126,35 @@ function ApiKeysTab({ appId }) {
   return (
     <div>
       {/* Create new key */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 28 }}>
+      <div style={{ display: 'flex', gap: 10, marginBottom: 28, flexWrap: 'wrap', alignItems: 'center' }}>
         <input
           value={newLabel}
           onChange={e => setNewLabel(e.target.value)}
           placeholder="Key label (e.g. Production)"
-          style={{ ...inputStyle, maxWidth: 280 }}
+          style={{ ...inputStyle, maxWidth: 240 }}
           onKeyDown={e => e.key === 'Enter' && createKey()}
         />
-        <button onClick={createKey} disabled={creating} style={btnPrimary}>
-          {creating ? <div className="spinner" style={{ borderTopColor: '#000' }} /> : '+ Generate Key'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '8px 14px' }}>
+          <span style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>Sandbox</span>
+          <div
+            onClick={() => setIsSandboxKey(s => !s)}
+            style={{
+              width: 36, height: 20, borderRadius: 10, cursor: 'pointer', transition: 'background 0.2s',
+              background: isSandboxKey ? 'var(--yellow)' : 'var(--bg-2)',
+              border: '1px solid var(--border-light)',
+              position: 'relative',
+            }}
+          >
+            <div style={{
+              width: 14, height: 14, borderRadius: '50%', background: '#fff',
+              position: 'absolute', top: 2,
+              left: isSandboxKey ? 18 : 2,
+              transition: 'left 0.2s',
+            }} />
+          </div>
+        </div>
+        <button onClick={createKey} disabled={creating} style={{ ...btnPrimary, background: isSandboxKey ? 'var(--yellow)' : 'var(--accent)' }}>
+          {creating ? <div className="spinner" style={{ borderTopColor: '#000' }} /> : `+ ${isSandboxKey ? 'Test' : 'Live'} Key`}
         </button>
       </div>
 
@@ -156,6 +184,17 @@ function ApiKeysTab({ appId }) {
                 }}>
                   {k.is_active ? 'active' : 'revoked'}
                 </span>
+                {k.is_sandbox && (
+                  <span style={{
+                    fontSize: 10, padding: '2px 8px',
+                    background: 'rgba(255,204,0,0.1)',
+                    color: 'var(--yellow)',
+                    border: '1px solid rgba(255,204,0,0.2)',
+                    borderRadius: 4, fontFamily: 'var(--font-mono)',
+                  }}>
+                    sandbox
+                  </span>
+                )}
               </div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-2)' }}>
                 {revealed[k.id] ? k.key : k.key.slice(0, 12) + '••••••••••••••••••••••••••••••••'}
