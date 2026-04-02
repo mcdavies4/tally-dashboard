@@ -432,6 +432,28 @@ function SettingsTab({ appId, app }) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
+  // Alert settings
+  const [alertEnabled, setAlertEnabled] = useState(app.alert_enabled ?? false)
+  const [alertThreshold, setAlertThreshold] = useState(app.alert_threshold ?? 100)
+  const [alertUrl, setAlertUrl] = useState(app.alert_webhook_url ?? '')
+  const [alertSaving, setAlertSaving] = useState(false)
+  const [alertSaved, setAlertSaved] = useState(false)
+
+  const saveAlerts = async () => {
+    setAlertSaving(true)
+    await supabase
+      .from('apps')
+      .update({
+        alert_enabled: alertEnabled,
+        alert_threshold: Number(alertThreshold),
+        alert_webhook_url: alertUrl || null,
+      })
+      .eq('id', appId)
+    setAlertSaving(false)
+    setAlertSaved(true)
+    setTimeout(() => setAlertSaved(false), 2000)
+  }
+
   const labelStyle = {
     display: 'block',
     fontSize: 11,
@@ -499,6 +521,72 @@ function SettingsTab({ appId, app }) {
         <button onClick={save} disabled={saving} style={btnPrimary}>
           {saving ? <div className="spinner" style={{ borderTopColor: '#000' }} /> : saved ? '✓ Saved' : 'Save rate'}
         </button>
+      </div>
+
+      <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 28, marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 700 }}>Low Balance Alerts</h3>
+          <div
+            onClick={() => setAlertEnabled(e => !e)}
+            style={{
+              width: 40, height: 22, borderRadius: 11, cursor: 'pointer',
+              background: alertEnabled ? 'var(--accent)' : 'var(--bg-3)',
+              border: '1px solid var(--border-light)',
+              position: 'relative', transition: 'background 0.2s',
+            }}
+          >
+            <div style={{
+              width: 16, height: 16, borderRadius: '50%', background: '#fff',
+              position: 'absolute', top: 2,
+              left: alertEnabled ? 20 : 2,
+              transition: 'left 0.2s',
+            }} />
+          </div>
+        </div>
+        <p style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: 20, lineHeight: 1.6 }}>
+          Tally will POST to your URL when a user's balance drops below the threshold. Great for prompting users to top up.
+        </p>
+
+        <div style={{ opacity: alertEnabled ? 1 : 0.4, pointerEvents: alertEnabled ? 'all' : 'none', transition: 'opacity 0.2s' }}>
+          <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>Alert threshold (credits)</label>
+              <input
+                type="number"
+                min="0"
+                value={alertThreshold}
+                onChange={e => setAlertThreshold(e.target.value)}
+                style={inputStyle}
+                placeholder="100"
+              />
+            </div>
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Your webhook URL</label>
+            <input
+              type="url"
+              value={alertUrl}
+              onChange={e => setAlertUrl(e.target.value)}
+              style={inputStyle}
+              placeholder="https://your-app.com/webhooks/tally-alerts"
+            />
+          </div>
+
+          <div style={{ background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '14px 16px', marginBottom: 16, fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--text-3)', lineHeight: 1.8 }}>
+            <div style={{ color: 'var(--text-2)', marginBottom: 4 }}>Payload Tally sends:</div>
+            {'{'}<br/>
+            &nbsp;&nbsp;<span style={{color:'var(--accent)'}}>"event"</span>: "credits.low_balance",<br/>
+            &nbsp;&nbsp;<span style={{color:'var(--accent)'}}>"user_id"</span>: "your_user_id",<br/>
+            &nbsp;&nbsp;<span style={{color:'var(--accent)'}}>"balance"</span>: 45,<br/>
+            &nbsp;&nbsp;<span style={{color:'var(--accent)'}}>"threshold"</span>: {alertThreshold},<br/>
+            &nbsp;&nbsp;<span style={{color:'var(--accent)'}}>"timestamp"</span>: "2026-01-01T00:00:00Z"<br/>
+            {'}'}
+          </div>
+
+          <button onClick={saveAlerts} disabled={alertSaving} style={btnPrimary}>
+            {alertSaving ? <div className="spinner" style={{ borderTopColor: '#000' }} /> : alertSaved ? '✓ Saved' : 'Save alert settings'}
+          </button>
+        </div>
       </div>
 
       <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 28 }}>
