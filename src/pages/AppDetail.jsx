@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
-const TABS = ['API Keys', 'Users', 'Transactions', 'Analytics', 'Settings']
+const TABS = ['API Keys', 'Users', 'Transactions', 'Analytics', 'Settings', 'Packages']
 
 export default function AppDetail() {
   const { appId } = useParams()
@@ -76,6 +76,7 @@ export default function AppDetail() {
         {tab === 'Transactions' && <TransactionsTab appId={appId} />}
         {tab === 'Analytics' && <AnalyticsTab appId={appId} />}
         {tab === 'Settings' && <SettingsTab appId={appId} app={app} />}
+        {tab === 'Packages' && <PackagesTab appId={appId} app={app} />}
       </div>
     </div>
   )
@@ -438,6 +439,192 @@ function AnalyticsTab({ appId }) {
 }
 
 
+
+// ─── Packages Tab ───────────────────────────────────────────────
+function PackagesTab({ appId, app }) {
+  const [packages, setPackages] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [creating, setCreating] = useState(false)
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState({ name: '', description: '', credits: '', price_amount: '', currency: 'gbp', is_popular: false })
+
+  const apiUrl = import.meta.env.VITE_API_URL || 'https://your-api.railway.app'
+
+  const fetchPackages = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch(`${apiUrl}/apps/${appId}/packages`, {
+      headers: { 'Authorization': `Bearer ${session?.access_token}` }
+    })
+    const data = await res.json()
+    setPackages(data.packages || [])
+    setLoading(false)
+  }
+
+  useEffect(() => { fetchPackages() }, [appId])
+
+  const createPackage = async () => {
+    if (!form.name || !form.credits || !form.price_amount) return
+    setCreating(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    await fetch(`${apiUrl}/apps/${appId}/packages`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...form, credits: Number(form.credits), price_amount: Number(form.price_amount) })
+    })
+    setForm({ name: '', description: '', credits: '', price_amount: '', currency: 'gbp', is_popular: false })
+    setShowForm(false)
+    await fetchPackages()
+    setCreating(false)
+  }
+
+  const deletePackage = async (pkgId) => {
+    const { data: { session } } = await supabase.auth.getSession()
+    await fetch(`${apiUrl}/apps/${appId}/packages/${pkgId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${session?.access_token}` }
+    })
+    await fetchPackages()
+  }
+
+  const topupUrl = `${apiUrl}/topup/${appId}?user_id=USER_ID`
+  const currencySymbol = { gbp: '£', usd: '$', eur: '€', ngn: '₦' }
+
+  if (loading) return <Loader />
+
+  return (
+    <div>
+      {/* Top-up URL */}
+      <div style={{ background: 'var(--bg-2)', border: '1px solid var(--accent-border)', borderRadius: 'var(--radius-lg)', padding: 24, marginBottom: 28 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Hosted Top-up URL</div>
+        <p style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: 14, lineHeight: 1.6 }}>
+          Share this URL with your users. Replace <code style={{ background: 'var(--bg-3)', padding: '1px 6px', borderRadius: 3, color: 'var(--accent)' }}>USER_ID</code> with your user's actual ID.
+        </p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ ...inputStyle, flex: 1, color: 'var(--text-3)', fontSize: 12, display: 'flex', alignItems: 'center', fontFamily: 'var(--font-mono)' }}>
+            {topupUrl}
+          </div>
+          <button onClick={() => navigator.clipboard.writeText(topupUrl)} style={btnGhost}>copy</button>
+          <a href={`${apiUrl}/topup/${appId}?user_id=preview`} target="_blank" rel="noreferrer">
+            <button style={btnGhost}>preview →</button>
+          </a>
+        </div>
+      </div>
+
+      {/* Packages list */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          Credit packages ({packages.length})
+        </div>
+        <button onClick={() => setShowForm(s => !s)} style={btnPrimary}>
+          + Add package
+        </button>
+      </div>
+
+      {/* Create form */}
+      {showForm && (
+        <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 24, marginBottom: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+            <div>
+              <label style={labelStyle}>Package name</label>
+              <input value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))} placeholder="Starter Pack" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Credits</label>
+              <input type="number" value={form.credits} onChange={e => setForm(f => ({...f, credits: e.target.value}))} placeholder="500" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Price (in pence/cents)</label>
+              <input type="number" value={form.price_amount} onChange={e => setForm(f => ({...f, price_amount: e.target.value}))} placeholder="500 = £5.00" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Currency</label>
+              <select value={form.currency} onChange={e => setForm(f => ({...f, currency: e.target.value}))} style={{ ...inputStyle, cursor: 'pointer' }}>
+                <option value="gbp">GBP (£)</option>
+                <option value="usd">USD ($)</option>
+                <option value="eur">EUR (€)</option>
+                <option value="ngn">NGN (₦)</option>
+              </select>
+            </div>
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <label style={labelStyle}>Description (optional)</label>
+            <input value={form.description} onChange={e => setForm(f => ({...f, description: e.target.value}))} placeholder="Great for small projects" style={inputStyle} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+            <input type="checkbox" checked={form.is_popular} onChange={e => setForm(f => ({...f, is_popular: e.target.checked}))} id="is_popular" />
+            <label htmlFor="is_popular" style={{ fontSize: 12, color: 'var(--text-2)', fontFamily: 'var(--font-mono)', cursor: 'pointer' }}>Mark as Most Popular</label>
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={createPackage} disabled={creating} style={btnPrimary}>
+              {creating ? <div className="spinner" style={{ borderTopColor: '#000' }} /> : 'Create package'}
+            </button>
+            <button onClick={() => setShowForm(false)} style={btnGhost}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {packages.length === 0 ? (
+        <Empty message="No packages yet. Add one above to enable the hosted top-up page." />
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+          {packages.map(pkg => {
+            const symbol = currencySymbol[pkg.currency] || pkg.currency.toUpperCase()
+            const price = (pkg.price_amount / 100).toFixed(2)
+            return (
+              <div key={pkg.id} style={{
+                background: 'var(--bg-2)',
+                border: `1px solid ${pkg.is_popular ? 'var(--accent-border)' : 'var(--border)'}`,
+                borderRadius: 'var(--radius-lg)', padding: 20, position: 'relative',
+              }}>
+                {pkg.is_popular && (
+                  <div style={{ position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%)', background: 'var(--accent)', color: '#000', fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 20, fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap' }}>
+                    POPULAR
+                  </div>
+                )}
+                <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8 }}>{pkg.name}</div>
+                <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--accent)', fontFamily: 'var(--font-mono)', marginBottom: 4 }}>
+                  {Number(pkg.credits).toLocaleString()} <span style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 400 }}>credits</span>
+                </div>
+                {pkg.description && <div style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: 8, lineHeight: 1.5 }}>{pkg.description}</div>}
+                <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 14 }}>{symbol}{price}</div>
+                <button onClick={() => deletePackage(pkg.id)} style={{ ...btnGhost, fontSize: 11, color: 'var(--red)', borderColor: 'rgba(255,68,68,0.2)', padding: '5px 10px' }}>
+                  Remove
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+
+function BrandingInput({ appId, field, defaultValue, placeholder, type = 'text' }) {
+  const [value, setValue] = useState(defaultValue || '')
+  const [saved, setSaved] = useState(false)
+
+  const save = async () => {
+    await supabase.from('apps').update({ [field]: value }).eq('id', appId)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 1500)
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 8 }}>
+      <input
+        type={type}
+        value={value}
+        onChange={e => setValue(e.target.value)}
+        onBlur={save}
+        placeholder={placeholder}
+        style={{ ...inputStyle, flex: 1 }}
+      />
+      {saved && <span style={{ fontSize: 11, color: 'var(--accent)', fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center' }}>✓</span>}
+    </div>
+  )
+}
+
 // ─── Settings Tab ───────────────────────────────────────────────
 function SettingsTab({ appId, app }) {
   const [rate, setRate] = useState(app.credit_rate ?? 100)
@@ -599,6 +786,31 @@ function SettingsTab({ appId, app }) {
           <button onClick={saveAlerts} disabled={alertSaving} style={btnPrimary}>
             {alertSaving ? <div className="spinner" style={{ borderTopColor: '#000' }} /> : alertSaved ? '✓ Saved' : 'Save alert settings'}
           </button>
+        </div>
+      </div>
+
+      <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 28, marginBottom: 20 }}>
+        <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>Top-up Page Branding</h3>
+        <p style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: 20, lineHeight: 1.6 }}>
+          Customise how your hosted top-up page looks to your users.
+        </p>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+          <div style={{ flex: 1 }}>
+            <label style={labelStyle}>Brand name</label>
+            <BrandingInput appId={appId} field="brand_name" defaultValue={app.brand_name || app.name} placeholder={app.name} />
+          </div>
+          <div style={{ flex: '0 0 120px' }}>
+            <label style={labelStyle}>Accent colour</label>
+            <BrandingInput appId={appId} field="brand_color" defaultValue={app.brand_color || '#00ff88'} type="color" />
+          </div>
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <label style={labelStyle}>Success redirect URL</label>
+          <BrandingInput appId={appId} field="topup_success_url" defaultValue={app.topup_success_url || ''} placeholder="https://your-app.com/credits?success=true" />
+        </div>
+        <div>
+          <label style={labelStyle}>Cancel redirect URL</label>
+          <BrandingInput appId={appId} field="topup_cancel_url" defaultValue={app.topup_cancel_url || ''} placeholder="https://your-app.com/credits" />
         </div>
       </div>
 
