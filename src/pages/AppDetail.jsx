@@ -344,6 +344,19 @@ function TransactionsTab({ appId }) {
               <Td mono dim>{Number(e.balance_after).toLocaleString()}</Td>
               <Td dim>{e.description || '—'}</Td>
               <Td mono dim>{new Date(e.created_at).toLocaleDateString()}</Td>
+              <Td>
+                {e.expires_at ? (
+                  <span style={{
+                    fontSize: 11, padding: '2px 8px',
+                    background: new Date(e.expires_at) < new Date() ? 'rgba(255,68,68,0.1)' : 'rgba(255,204,0,0.1)',
+                    color: new Date(e.expires_at) < new Date() ? 'var(--red)' : 'var(--yellow)',
+                    border: `1px solid ${new Date(e.expires_at) < new Date() ? 'rgba(255,68,68,0.2)' : 'rgba(255,204,0,0.2)'}`,
+                    borderRadius: 4, fontFamily: 'var(--font-mono)',
+                  }}>
+                    {new Date(e.expires_at) < new Date() ? 'expired' : `exp ${new Date(e.expires_at).toLocaleDateString()}`}
+                  </span>
+                ) : <span style={{ color: 'var(--text-3)', fontSize: 11, fontFamily: 'var(--font-mono)' }}>—</span>}
+              </Td>
             </tr>
           ))}
         </tbody>
