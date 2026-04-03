@@ -317,6 +317,7 @@ function TransactionsTab({ appId }) {
             <Th>Balance After</Th>
             <Th>Description</Th>
             <Th>Date</Th>
+            <Th>Expiry</Th>
           </tr>
         </thead>
         <tbody>
