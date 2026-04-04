@@ -601,6 +601,34 @@ function PackagesTab({ appId, app }) {
 }
 
 
+
+function PaddleSecretInput({ appId, defaultValue }) {
+  const [value, setValue] = useState(defaultValue || '')
+  const [saved, setSaved] = useState(false)
+  const [visible, setVisible] = useState(false)
+
+  const save = async () => {
+    await supabase.from('apps').update({ paddle_webhook_secret: value || null }).eq('id', appId)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 1500)
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 8 }}>
+      <input
+        type={visible ? 'text' : 'password'}
+        value={value}
+        onChange={e => setValue(e.target.value)}
+        onBlur={save}
+        placeholder="pdl_ntfset_..."
+        style={{ ...inputStyle, flex: 1, fontFamily: 'var(--font-mono)', fontSize: 12 }}
+      />
+      <button onClick={() => setVisible(v => !v)} style={btnGhost}>{visible ? 'hide' : 'show'}</button>
+      {saved && <span style={{ fontSize: 11, color: 'var(--accent)', fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center' }}>✓ saved</span>}
+    </div>
+  )
+}
+
 function BrandingInput({ appId, field, defaultValue, placeholder, type = 'text' }) {
   const [value, setValue] = useState(defaultValue || '')
   const [saved, setSaved] = useState(false)
@@ -823,17 +851,26 @@ function SettingsTab({ appId, app }) {
         {[
           { label: 'Stripe', path: 'stripe' },
           { label: 'Polar', path: 'polar' },
+          { label: 'Paddle', path: 'paddle' },
         ].map(({ label, path }) => {
           const url = `${import.meta.env.VITE_API_URL || 'https://your-api.railway.app'}/webhooks/${path}/${appId}`
           return (
-            <div key={path} style={{ marginBottom: 14 }}>
+            <div key={path} style={{ marginBottom: 20 }}>
               <div style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</div>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, marginBottom: path === 'paddle' ? 10 : 0 }}>
                 <div style={{ ...inputStyle, flex: 1, color: 'var(--text-3)', fontSize: 12, display: 'flex', alignItems: 'center', fontFamily: 'var(--font-mono)' }}>
                   {url}
                 </div>
                 <button onClick={() => navigator.clipboard.writeText(url)} style={btnGhost}>copy</button>
               </div>
+              {path === 'paddle' && (
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: 6, marginTop: 8 }}>
+                    Paddle webhook secret <span style={{ color: 'var(--text-3)', opacity: 0.5 }}>(from Paddle → Developer Tools → Notifications)</span>
+                  </div>
+                  <PaddleSecretInput appId={appId} defaultValue={app.paddle_webhook_secret || ''} />
+                </div>
+              )}
             </div>
           )
         })}
