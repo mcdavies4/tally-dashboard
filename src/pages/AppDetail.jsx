@@ -709,16 +709,6 @@ function SettingsTab({ appId, app }) {
     setTimeout(() => setAlertSaved(false), 2000)
   }
 
-  const labelStyle = {
-    display: 'block',
-    fontSize: 11,
-    color: 'var(--text-3)',
-    fontFamily: 'var(--font-mono)',
-    marginBottom: 6,
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-  }
-
   const save = async () => {
     setSaving(true)
     await supabase
@@ -940,6 +930,16 @@ function Empty({ message }) {
       {message}
     </div>
   )
+}
+
+const labelStyle = {
+  display: 'block',
+  fontSize: 11,
+  color: 'var(--text-3)',
+  fontFamily: 'var(--font-mono)',
+  marginBottom: 6,
+  textTransform: 'uppercase',
+  letterSpacing: '0.5px',
 }
 
 const btnPrimary = {
