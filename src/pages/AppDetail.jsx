@@ -452,13 +452,20 @@ function PackagesTab({ appId, app }) {
   const apiUrl = import.meta.env.VITE_API_URL || 'https://your-api.railway.app'
 
   const fetchPackages = async () => {
-    const { data: { session } } = await supabase.auth.getSession()
-    const res = await fetch(`${apiUrl}/apps/${appId}/packages`, {
-      headers: { 'Authorization': `Bearer ${session?.access_token}` }
-    })
-    const data = await res.json()
-    setPackages(data.packages || [])
-    setLoading(false)
+    try {
+      const { data, error } = await supabase
+        .from('credit_packages')
+        .select('*')
+        .eq('app_id', appId)
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+      if (error) throw error
+      setPackages(data || [])
+    } catch (err) {
+      console.error('Fetch packages error:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { fetchPackages() }, [appId])
@@ -466,25 +473,44 @@ function PackagesTab({ appId, app }) {
   const createPackage = async () => {
     if (!form.name || !form.credits || !form.price_amount) return
     setCreating(true)
-    const { data: { session } } = await supabase.auth.getSession()
-    await fetch(`${apiUrl}/apps/${appId}/packages`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, credits: Number(form.credits), price_amount: Number(form.price_amount) })
-    })
-    setForm({ name: '', description: '', credits: '', price_amount: '', currency: 'gbp', is_popular: false })
-    setShowForm(false)
-    await fetchPackages()
-    setCreating(false)
+    try {
+      const { error } = await supabase
+        .from('credit_packages')
+        .insert({
+          app_id: appId,
+          name: form.name,
+          description: form.description || null,
+          credits: Number(form.credits),
+          price_amount: Number(form.price_amount),
+          currency: form.currency,
+          is_popular: form.is_popular,
+          is_active: true,
+          sort_order: 0,
+        })
+      if (error) throw error
+      setForm({ name: '', description: '', credits: '', price_amount: '', currency: 'gbp', is_popular: false })
+      setShowForm(false)
+      await fetchPackages()
+    } catch (err) {
+      console.error('Create package error:', err)
+      alert('Failed to create package: ' + err.message)
+    } finally {
+      setCreating(false)
+    }
   }
 
   const deletePackage = async (pkgId) => {
-    const { data: { session } } = await supabase.auth.getSession()
-    await fetch(`${apiUrl}/apps/${appId}/packages/${pkgId}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${session?.access_token}` }
-    })
-    await fetchPackages()
+    try {
+      const { error } = await supabase
+        .from('credit_packages')
+        .update({ is_active: false })
+        .eq('id', pkgId)
+        .eq('app_id', appId)
+      if (error) throw error
+      await fetchPackages()
+    } catch (err) {
+      console.error('Delete package error:', err)
+    }
   }
 
   const topupUrl = `${apiUrl}/topup/${appId}?user_id=USER_ID`
